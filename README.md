@@ -1,47 +1,36 @@
-# SIGMA Fleet Cloud
+# SIGMA Fleet 2.0 — Adaptación de arquitectura SILOG
 
-Sistema web de gestión de mantenimiento de flota con Flask y PostgreSQL, preparado para GitHub + Railway.
+Sistema web para mantenimiento de vehículos y maquinaria pesada. Se tomó como referencia la estructura Node.js + Express + PostgreSQL, autenticación por sesión, roles, interfaz estática y despliegue Railway del proyecto SILOG. Se retiraron los módulos logísticos/mineros ajenos a mantenimiento.
 
-## Funciones incluidas
-- Login con contraseñas hasheadas y sesiones seguras.
-- Roles `admin` y `tecnico`; administración de usuarios solo para admin.
-- Flota, PM por km/horómetro/fecha, órdenes de trabajo, inventario y KPI.
-- Alertas automáticas de PM vencido/próximo y stock mínimo al consultar panel.
-- API de salud `/api/health` y panel de datos `/api/dashboard` (requiere login).
-- PostgreSQL en Railway; SQLite como modo local de prueba.
+## Módulos incluidos
+- Dashboard: disponibilidad, PM vencidos/próximos, OT abiertas, costos y MTTR/MTBF básicos.
+- Flota: vehículos/maquinaria, placa/código, marca/modelo, tipo, horómetro y kilometraje.
+- Plan PM: intervalos por días, kilómetros u horas y siguiente vencimiento.
+- Órdenes de trabajo: correctivas/preventivas, prioridad, técnico, fechas, estado, costo y observaciones.
+- Repuestos: stock, stock mínimo, movimientos y consumo por OT.
+- Combustible: carga, litros, costo, odómetro y proveedor.
+- Neumáticos: posición, serie, instalación, retiro y kilometraje.
+- Usuarios y auditoría.
 
-## Despliegue en Railway
-1. Sube todo el contenido de esta carpeta a un repositorio GitHub.
-2. En Railway crea un proyecto: **New Project > Deploy from GitHub Repo** y selecciona el repositorio.
-3. Añade un servicio PostgreSQL al mismo proyecto.
-4. En Variables del servicio web configura:
-   - `SECRET_KEY`: cadena aleatoria larga y privada.
-   - `ADMIN_USERNAME`: nombre de usuario administrador.
-   - `ADMIN_PASSWORD`: contraseña inicial fuerte (mínimo 10 caracteres).
-   - `ADMIN_FULL_NAME`: nombre visible.
-   - `COOKIE_SECURE`: `true`.
-   - `DATABASE_URL`: referencia a la variable `DATABASE_URL` del servicio PostgreSQL de Railway (usar el selector de variables / reference).
-5. Railway detecta `requirements.txt` y `Procfile`; el comando de inicio está también en `railway.json`.
-6. Genera un dominio público en Settings > Networking > Generate Domain.
+## Ejecutar localmente
+1. Instalar Node.js 20 o superior y PostgreSQL.
+2. Copiar `.env.example` a `.env` y configurar `DATABASE_URL`, `SESSION_SECRET`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`.
+3. `npm install`
+4. `npm start`
+5. Abrir `http://localhost:3000`
 
-## Primer acceso
-Configura `ADMIN_USERNAME=admin` y establece `ADMIN_PASSWORD` con una contraseña privada robusta de al menos 12 caracteres (por ejemplo, genera una nueva y única para tu empresa). Usa exactamente esos valores en el primer acceso. El administrador inicial se crea automáticamente al iniciar la aplicación si no existe. Cambia la contraseña desde Variables de Railway y recrea el usuario solo en una base nueva; el valor de entorno no restablece una cuenta ya creada.
+El esquema se crea automáticamente al iniciar. La cuenta inicial se crea solo si no existe. Configure una contraseña privada antes de publicar.
 
-## Ejecución local
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-set ADMIN_USERNAME=admin
-set ADMIN_PASSWORD=UnaClaveLarga-2026!
-python app.py
-```
-Abre http://localhost:5000
+## Railway + GitHub
+1. Suba el contenido de esta carpeta a un repositorio GitHub.
+2. En Railway cree un proyecto desde ese repositorio.
+3. Añada PostgreSQL al proyecto.
+4. En variables del servicio configure `DATABASE_URL` (referencia de PostgreSQL), `SESSION_SECRET` (secreto largo aleatorio), `ADMIN_USERNAME` y `ADMIN_PASSWORD` (contraseña privada).
+5. Railway detectará Node y ejecutará `npm start`.
 
-## Notas importantes
-- Los datos están en PostgreSQL cuando `DATABASE_URL` apunta al servicio PostgreSQL de Railway.
-- La aplicación inicializa las tablas con `create_all`; para cambios de esquema en producción, incorporar migraciones Alembic antes de evolucionar modelos.
-- No hay integración GPS/ECU real incluida: se requiere proveedor, hardware, credenciales y definición de protocolo. La API queda como punto de integración.
-- Los KPI actuales son indicadores operativos iniciales. MTBF/MTTR y cumplimiento PM requieren registrar eventos de falla, duración de reparación y planes ejecutados con más detalle; no deben interpretarse como métricas auditadas.
-- Configura copias de seguridad de PostgreSQL desde Railway y conserva exportaciones periódicas.
+## Seguridad y alcance
+- Contraseñas con scrypt y sesiones almacenadas en PostgreSQL; cookie HttpOnly/SameSite.
+- Roles ADMIN, SUPERVISOR, TECNICO y OPERADOR.
+- Las rutas de escritura requieren sesión y validan datos.
+- No incluye telemetría GPS, conexión ECU/CAN, sensores IoT ni integración con proveedores externos. Para eso se requieren dispositivos, protocolo, API y credenciales reales.
+- Los indicadores son operativos y dependen de que los datos se registren correctamente. MTBF/MTTR son aproximaciones calculadas con órdenes cerradas y fallas registradas.
