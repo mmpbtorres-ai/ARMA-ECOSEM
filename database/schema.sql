@@ -29,8 +29,9 @@ CREATE TABLE IF NOT EXISTS work_orders (
  descripcion TEXT NOT NULL, tecnico TEXT, fecha_programada DATE, fecha_inicio TIMESTAMPTZ,
  fecha_cierre TIMESTAMPTZ, kilometraje NUMERIC(14,2), horometro NUMERIC(14,2),
  costo_mano_obra NUMERIC(14,2) NOT NULL DEFAULT 0, costo_repuestos NUMERIC(14,2) NOT NULL DEFAULT 0,
- observaciones TEXT, created_by BIGINT REFERENCES users(id), created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+ observaciones TEXT, created_by BIGINT REFERENCES users(id), pm_plan_id BIGINT REFERENCES pm_plans(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE work_orders ADD COLUMN IF NOT EXISTS pm_plan_id BIGINT REFERENCES pm_plans(id) ON DELETE SET NULL;
 CREATE TABLE IF NOT EXISTS parts (
  id BIGSERIAL PRIMARY KEY, codigo TEXT UNIQUE NOT NULL, nombre TEXT NOT NULL, unidad TEXT NOT NULL DEFAULT 'UND',
  stock NUMERIC(14,2) NOT NULL DEFAULT 0 CHECK(stock>=0), stock_minimo NUMERIC(14,2) NOT NULL DEFAULT 0,
@@ -60,3 +61,27 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE INDEX IF NOT EXISTS idx_wo_vehicle_state ON work_orders(vehicle_id,estado);
 CREATE INDEX IF NOT EXISTS idx_pm_vehicle ON pm_plans(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_fuel_vehicle_date ON fuel_logs(vehicle_id,fecha DESC);
+
+
+-- Módulos Enterprise: actividades diarias, técnicos y presupuestos
+CREATE TABLE IF NOT EXISTS technicians (
+ id BIGSERIAL PRIMARY KEY, codigo TEXT UNIQUE NOT NULL, nombre TEXT NOT NULL,
+ especialidad TEXT, telefono TEXT, correo TEXT, estado TEXT NOT NULL DEFAULT 'ACTIVO',
+ created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS daily_activities (
+ id BIGSERIAL PRIMARY KEY, fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+ vehicle_id BIGINT REFERENCES vehicles(id) ON DELETE SET NULL,
+ tecnico_id BIGINT REFERENCES technicians(id) ON DELETE SET NULL,
+ tipo TEXT NOT NULL DEFAULT 'INSPECCION', descripcion TEXT NOT NULL,
+ kilometraje NUMERIC(14,2), horometro NUMERIC(14,2), hallazgos TEXT,
+ estado TEXT NOT NULL DEFAULT 'PENDIENTE', work_order_id BIGINT REFERENCES work_orders(id) ON DELETE SET NULL,
+ created_by BIGINT REFERENCES users(id), created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS budgets (
+ id BIGSERIAL PRIMARY KEY, periodo TEXT NOT NULL UNIQUE,
+ monto_presupuestado NUMERIC(14,2) NOT NULL CHECK(monto_presupuestado>=0),
+ observaciones TEXT, created_by BIGINT REFERENCES users(id), created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_daily_date ON daily_activities(fecha DESC);
+CREATE INDEX IF NOT EXISTS idx_technicians_active ON technicians(estado);

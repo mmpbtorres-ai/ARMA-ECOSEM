@@ -1,8 +1,8 @@
 {
   "name": "sigma-fleet",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "SIGMA Fleet - mantenimiento y control de flota pesada",
+  "description": "SIGMA Fleet Enterprise - gestión integral de flota y mantenimiento",
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
@@ -12,6 +12,7 @@
     "node": ">=20"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "helmet": "^8.0.0",
     "pg": "^8.13.1"
