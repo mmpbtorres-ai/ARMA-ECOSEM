@@ -1,53 +1,102 @@
-# SIGMA FLEET ENTERPRISE V1.0
+# SIGMA FLEET ENTERPRISE V1.1 — GitHub + Railway
 
-Sistema web de gestión integral de flota y mantenimiento, adaptado sobre el proyecto SILOG original. Arquitectura Node.js + Express + PostgreSQL, interfaz web responsive y autenticación por sesión.
+Sistema web de administración de flota, mantenimiento y control operativo. Esta versión conserva la arquitectura de tu V1: **Node.js + Express + PostgreSQL**. Está preparada para desplegarse desde un repositorio GitHub hacia Railway.
 
-## Módulos
-- Dashboard ejecutivo: disponibilidad, unidades, órdenes abiertas, PM vencidos, stock crítico, costos del mes y MTTR.
-- Gestión de flota: vehículos y maquinaria, placa, marca, modelo, serie, estado, kilometraje y horómetro.
-- Actividades diarias: registro por unidad, técnico, fecha, tipo, odómetro/horómetro, hallazgos y estado.
-- Planificador PM: intervalos por días, kilómetros y horas; cálculo automático de próximo vencimiento y semáforo PROGRAMADO / PRÓXIMO / VENCIDO (umbral próximo: 90% del intervalo), con generación de OT preventiva desde el plan y actualización de la última lectura al cerrar esa OT.
-- Mantenimiento preventivo y correctivo mediante órdenes de trabajo.
-- Órdenes de trabajo: prioridad, técnico, programación, inicio/cierre y costos.
-- Almacén y repuestos: catálogo, stock mínimo, movimientos de ingreso/consumo y trazabilidad.
-- Gestión de técnicos: código, especialidad y datos de contacto.
-- Costos y presupuestos: presupuesto mensual frente a ejecución registrada en órdenes cerradas o en curso según fecha.
-- Reportes: exportación CSV compatible con Excel y reporte imprimible/Guardar como PDF desde el navegador.
-- Login, contraseñas con scrypt, sesiones, roles ADMIN/SUPERVISOR/TECNICO/OPERADOR y auditoría.
-- Base de datos PostgreSQL con historial de registros.
+## Módulos incluidos
 
-## Requisitos
-- Windows 10/11 de 64 bits.
-- Node.js 20 LTS o superior.
-- PostgreSQL 14 o superior (local o servidor accesible).
-- Acceso de red a PostgreSQL si la base de datos es remota.
+- Dashboard ejecutivo, disponibilidad, OT abiertas, PM vencidos, repuestos críticos, costos y MTTR.
+- Flota: vehículos y maquinaria, condición, kilometraje y horómetro.
+- Plan PM por días, kilometraje y horómetro, con generación de OT preventiva.
+- Actividades diarias y órdenes de trabajo preventivas, correctivas e inspecciones.
+- Programa general de mantenimiento por equipo y programa semanal proyectado (editable).
+- Reporte de estatus y actualización de condición operativa diaria por turno/guardia (editable).
+- Cronograma de engrase por componente y frecuencia, con vencimiento calculado por días, kilometraje u horómetro; reporte de engrase ejecutado con lectura de KM/horómetro.
+- Control documental: presentación inicial, actualizaciones, programas, reportes, cronograma de engrase, informes de salida, hoja de relevo e información solicitada por Costos. Registra frecuencia, evento de actualización, estado, versión, responsable y enlace al archivo.
+- Eventos de salida de mantenimiento, retiro de equipos de obra, entrega/recepción y solicitudes de Costos.
+- Repuestos, movimientos, combustible, neumáticos, técnicos, costos, presupuestos, reportes y auditoría.
+- Usuarios y roles; autenticación por sesión almacenada en PostgreSQL.
 
-## Instalación en Windows
-1. Instale PostgreSQL y cree una base de datos llamada `sigma_fleet` (por ejemplo: `CREATE DATABASE sigma_fleet;`).
-2. Instale Node.js 20 LTS o superior.
-3. Descomprima el ZIP en una carpeta con permisos de escritura (recomendado: Documentos\SIGMA_FLEET).
-4. Ejecute `CONFIGURAR_WINDOWS.ps1` desde PowerShell. Si la política local lo impide, abra PowerShell en la carpeta y ejecute `powershell -ExecutionPolicy Bypass -File .\CONFIGURAR_WINDOWS.ps1`.
-5. Edite `.env` y configure `DATABASE_URL`, `SESSION_SECRET`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`. Use una contraseña robusta y privada.
-6. Ejecute `INICIAR_SIGMA.bat` y abra `http://localhost:3000`.
+## Matriz de entregables y actualización
 
-El esquema se crea automáticamente al iniciar. La cuenta administradora inicial se crea solo si el usuario no existe y `ADMIN_PASSWORD` está configurada. No hay credenciales predeterminadas embebidas.
+El módulo de control documental trae estos criterios de referencia; puedes modificar frecuencia, evento, versión, responsable, destinatario y enlace en cada registro:
 
-## Desarrollo y verificación
+| Entregable | Frecuencia / condición de actualización |
+|---|---|
+| Presentación inicial | Inicial y actualización cuando corresponda. |
+| Programa general de mantenimiento por equipo | Al registrar el equipo y cuando cambie el programa. |
+| Programa semanal de mantenimiento proyectado | Semanal. |
+| Reporte de estatus de equipos | Semanal; actualizar ante cambio de fin de guardia. |
+| Actualización de condición operativa | Diaria y ante cambio de guardia. |
+| Cronograma de engrase | Según el programa de lubricación definido para cada equipo y componente; la frecuencia se ingresa en el sistema. |
+| Reporte de engrase ejecutado | Después de cada actividad. |
+| Informe de salida de mantenimiento | Cada vez que culmine un mantenimiento. |
+| Informe de salida de equipos de obra | Cada vez que un equipo sea retirado. |
+| Hoja de relevo de equipos | En cada entrega y recepción. |
+| Información solicitada por Costos | Cada vez que sea requerida. |
+
+El sistema genera automáticamente registros documentales al actualizar la condición diaria, registrar engrases ejecutados, cerrar una OT y registrar salidas/retiros/relevos/solicitudes de Costos. El texto “semanal; actualizar ante cambio de fin de guardia” es un criterio configurable para reflejar la instrucción recibida; ajústalo si el área establece otra regla.
+
+## Despliegue desde GitHub a Railway
+
+### 1. Subir el proyecto a GitHub
+1. Descomprime este ZIP.
+2. Crea un repositorio en GitHub y carga **el contenido de la carpeta** (package.json debe quedar en la raíz del repositorio).
+3. Confirma que `.env` no se suba; `.gitignore` ya excluye ese archivo.
+
+### 2. Crear los servicios en Railway
+1. Crea un proyecto en Railway y selecciona **Deploy from GitHub Repo**.
+2. Autoriza GitHub y selecciona el repositorio SIGMA Fleet. Railway detectará Node.js mediante `package.json`; `railway.json` conserva el comando de inicio y el health check del servicio.
+3. Dentro del mismo proyecto crea un servicio **PostgreSQL**.
+4. En el servicio de la aplicación, agrega la variable `DATABASE_URL` con la referencia: `${{Postgres.DATABASE_URL}}` (usa el nombre real del servicio PostgreSQL si no se llama `Postgres`).
+5. Agrega las variables `ADMIN_USERNAME` y `ADMIN_PASSWORD`. Usa una contraseña robusta. Configura también `NODE_ENV=production`.
+6. Ejecuta el despliegue y genera un dominio público en **Settings → Networking → Generate Domain**.
+
+### 3. Variables obligatorias
+
+| Variable | Valor / uso |
+|---|---|
+| `DATABASE_URL` | Referencia al `DATABASE_URL` del servicio PostgreSQL de Railway. |
+| `ADMIN_USERNAME` | Usuario administrador inicial, por ejemplo `admin`. |
+| `ADMIN_PASSWORD` | Contraseña inicial segura de al menos 10 caracteres. |
+| `NODE_ENV` | `production`. |
+| `PORT` | Railway lo inyecta; no fijar valor manual. |
+
+Al primer arranque, SIGMA ejecuta `database/schema.sql` y crea las tablas que falten. El usuario administrador inicial se crea solo si todavía no existe y `ADMIN_PASSWORD` está configurada. No hay una contraseña predeterminada incluida.
+
+## Actualizaciones posteriores
+
+Cada cambio que subas a la rama conectada de GitHub activa un nuevo despliegue en Railway (si la implementación automática está habilitada). La base PostgreSQL conserva los datos entre despliegues. No reemplaces el servicio PostgreSQL ni borres su volumen. Para actualizar, modifica el código y sube los cambios a GitHub; no reinicialices la base.
+
+## Copias de seguridad
+
+Configura backups del servicio PostgreSQL desde Railway y conserva exportaciones fuera del proyecto. Un despliegue nuevo no sustituye una copia de seguridad. Antes de cambios importantes, crea un respaldo de la base.
+
+## Prueba local opcional
+
+Requiere Node.js 20+ y PostgreSQL. Copia `.env.example` a `.env`, completa `DATABASE_URL`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`, y luego ejecuta:
+
 ```bash
 npm install
 npm run verify
 npm start
 ```
 
-## Despliegue en servidor
-Configure `DATABASE_URL`, `SESSION_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` y `PORT`. En producción use HTTPS y una base de datos con copias de seguridad. Se conserva `railway.json` para despliegue en Railway.
+Abre `http://localhost:3000`.
 
-## Reportes
-- Los botones de exportación descargan CSV con codificación UTF-8 BOM, compatible con Excel.
-- El reporte PDF se genera mediante la función de impresión del navegador; seleccione “Guardar como PDF”. No requiere un servicio externo.
+## Alcance y límites a tener presentes
 
-## Consideraciones y límites
-- El plan PM calcula vencimiento usando el último servicio y la lectura actual registrada de km/horómetro; por ello es necesario actualizar las lecturas operativas periódicamente.
-- Los costos ejecutados provienen de los importes registrados en órdenes de trabajo; no se incluyen costos externos no registrados.
-- No incluye GPS, telemetría ECU/CAN, sensores IoT, integración contable ni sincronización móvil offline. Estas integraciones requieren dispositivos, APIs y credenciales.
-- El ZIP incluye código fuente y scripts de preparación para Windows; no es un instalador MSI firmado ni contiene PostgreSQL/Node.js. La instalación requiere completar los requisitos indicados.
+- Los registros operativos, usuarios, sesiones e historial se guardan en PostgreSQL compartido. Los usuarios que ingresen al mismo dominio de Railway consultan la misma base.
+- El campo “Enlace al archivo” conserva una URL a un repositorio documental externo; este ZIP no almacena archivos PDF/Excel binarios ni incorpora almacenamiento de objetos.
+- Los reportes tabulares se exportan a CSV compatible con Excel y los reportes imprimibles se pueden guardar como PDF desde el navegador.
+- No incluye GPS, telemetría CAN/ECU, sensores, integración contable ni modo offline.
+- La frecuencia y el evento de actualización de cada documento se dejan editables, porque el texto recibido no define una frecuencia inequívoca para todos los entregables.
+
+## Verificación
+
+```bash
+npm run verify
+```
+
+La configuración incluida solicita Railpack, ejecuta `npm start` y verifica el endpoint `/api/health`. Railway inyecta `PORT`; no lo fijes manualmente.
+
+**Importante para tu despliegue (fecha de referencia: 16/11/2026):** Railway mantiene `railway.json` para servicios existentes solo hasta el **01/12/2026**; después dejará de leerlo. En el despliegue actual el archivo solicita Railpack, `npm start` y `/api/health`. Antes del 01/12/2026, deja también estos valores configurados en el panel de tu servicio Railway: Builder `RAILPACK`, Start Command `npm start`, Healthcheck Path `/api/health` y timeout `300` segundos. No agregué `.railway/railway.ts` porque en un proyecto existente primero se debe importar y revisar la configuración real de recursos con el CLI de Railway; no conviene aplicar una definición inventada que pudiera modificar servicios o base de datos.

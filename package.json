@@ -1,8 +1,8 @@
 {
   "name": "sigma-fleet",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "SIGMA Fleet Enterprise - gestión integral de flota y mantenimiento",
+  "description": "SIGMA Fleet Enterprise - operación, mantenimiento, engrase y control documental",
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
