@@ -1,6 +1,6 @@
-# SIGMA FLEET ENTERPRISE V1.1 — GitHub + Railway
+# SIGMA FLEET ENTERPRISE V1.1.1 — GitHub + Railway
 
-Sistema web de administración de flota, mantenimiento y control operativo. Esta versión conserva la arquitectura de tu V1: **Node.js + Express + PostgreSQL**. Está preparada para desplegarse desde un repositorio GitHub hacia Railway.
+Sistema web de administración de flota, mantenimiento y control operativo. Esta versión conserva la arquitectura de tu V1: **Node.js + Express + PostgreSQL**. Incluye un `Dockerfile` basado en la imagen oficial de Node.js para evitar el error `npm: command not found` cuando Railway no detecta correctamente el entorno Node.
 
 ## Módulos incluidos
 
@@ -40,12 +40,12 @@ El sistema genera automáticamente registros documentales al actualizar la condi
 
 ### 1. Subir el proyecto a GitHub
 1. Descomprime este ZIP.
-2. Crea un repositorio en GitHub y carga **el contenido de la carpeta** (package.json debe quedar en la raíz del repositorio).
+2. Crea un repositorio en GitHub y carga **el contenido de la carpeta directamente en la raíz** (Dockerfile y package.json deben quedar visibles en la página principal del repositorio; no subas una carpeta envolvente). Si mantienes una subcarpeta, configura Railway Root Directory a esa ruta.
 3. Confirma que `.env` no se suba; `.gitignore` ya excluye ese archivo.
 
 ### 2. Crear los servicios en Railway
 1. Crea un proyecto en Railway y selecciona **Deploy from GitHub Repo**.
-2. Autoriza GitHub y selecciona el repositorio SIGMA Fleet. Railway detectará Node.js mediante `package.json`; `railway.json` conserva el comando de inicio y el health check del servicio.
+2. Autoriza GitHub y selecciona el repositorio SIGMA Fleet. Railway detectará el `Dockerfile` y construirá una imagen con Node.js y npm; `railway.json` selecciona el builder Dockerfile y define el health check.
 3. Dentro del mismo proyecto crea un servicio **PostgreSQL**.
 4. En el servicio de la aplicación, agrega la variable `DATABASE_URL` con la referencia: `${{Postgres.DATABASE_URL}}` (usa el nombre real del servicio PostgreSQL si no se llama `Postgres`).
 5. Agrega las variables `ADMIN_USERNAME` y `ADMIN_PASSWORD`. Usa una contraseña robusta. Configura también `NODE_ENV=production`.
@@ -97,6 +97,6 @@ Abre `http://localhost:3000`.
 npm run verify
 ```
 
-La configuración incluida solicita Railpack, ejecuta `npm start` y verifica el endpoint `/api/health`. Railway inyecta `PORT`; no lo fijes manualmente.
+La configuración incluida selecciona Dockerfile; la imagen instala dependencias y ejecuta `npm start`, y el health check verifica `/api/health`. Railway inyecta `PORT`; no lo fijes manualmente.
 
 **Importante para tu despliegue (fecha de referencia: 16/11/2026):** Railway mantiene `railway.json` para servicios existentes solo hasta el **01/12/2026**; después dejará de leerlo. En el despliegue actual el archivo solicita Railpack, `npm start` y `/api/health`. Antes del 01/12/2026, deja también estos valores configurados en el panel de tu servicio Railway: Builder `RAILPACK`, Start Command `npm start`, Healthcheck Path `/api/health` y timeout `300` segundos. No agregué `.railway/railway.ts` porque en un proyecto existente primero se debe importar y revisar la configuración real de recursos con el CLI de Railway; no conviene aplicar una definición inventada que pudiera modificar servicios o base de datos.
